@@ -210,10 +210,7 @@ footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240
 <div class="wrap">
   <div class="topbar">
     <div class="brand"><i class="ball"></i><span>Pelmen' Grand Slam</span></div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <div class="status" id="status"><i class="dot"></i><span id="statusText">Loading</span></div>
-      <button class="btn small" id="exportBtn" hidden>Download updated index.html</button>
-    </div>
+
   </div>
   <div id="app"></div>
   <footer>
@@ -222,7 +219,7 @@ footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240
   </footer>
 </div>
 
-<script id="state" type="application/json">{"title": "The Rivalry", "subtitle": "Two guys. One net. Zero chill.", "players": [{"name": "Dima", "photo": "A"}, {"name": "Mykyta", "photo": "B"}], "tournaments": [{"id": "t1", "emoji": "🥟", "name": "Pelmen' Open", "surface": "Kitchen clay · first to 2 wins", "champion": 0, "prize": "", "matches": [{"id": "m1", "date": "", "sets": [[2, 6], [6, 3], [6, 1]], "note": "Match 1 of the series"}, {"id": "m2", "date": "", "sets": [[4, 6], [6, 0], [6, 3]], "note": "Match 2 — Dima seals the title 2–0"}]}, {"id": "t2", "emoji": "🥥", "name": "Kokos Cup", "surface": "Beach hard court · first to 2 wins", "champion": null, "prize": "", "matches": []}]}</script>
+<script id="state" type="application/json">{"title": "The Rivalry", "subtitle": "Two guys. One net. Zero chill.", "players": [{"name": "Dima", "photo": "A"}, {"name": "Mykyta", "photo": "B"}], "tournaments": [{"id": "t1", "emoji": "🥟", "name": "Pelmen' Open", "surface": "Kitchen clay · first to 2 wins", "champion": 0, "prize": "", "matches": [{"id": "m1", "date": "", "sets": [[2, 6], [6, 3], [6, 1]], "note": "Match 1 of the series"}, {"id": "m2", "date": "", "sets": [[4, 6], [6, 0], [6, 3]], "note": "Match 2 — Dima seals the title 2–0"}]}, {"id": "t2", "emoji": "🥥", "name": "Kokos Cup", "surface": "Beach hard court · first to 2 wins", "champion": null, "prize": "", "matches": []}], "friendlies": [{"id": "f1", "date": "", "sets": [[7, 6], [5, 7], [6, 3]], "note": "Friendly, no trophy on the line"}]}</script>
 
 <script>
 (function(){
@@ -263,8 +260,10 @@ function localLoad(){
 }
 function setStatus(text, busy){
   var el = document.getElementById('status');
+  if(!el) return;
   el.classList.toggle('saving', !!busy);
-  document.getElementById('statusText').textContent = text;
+  var t = document.getElementById('statusText');
+  if(t) t.textContent = text;
 }
 function scheduleSave(){
   dirty = true;
@@ -347,6 +346,45 @@ function fmtDate(d){
   if(parts.length !== 3) return d;
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return Number(parts[2]) + ' ' + (months[Number(parts[1]) - 1] || '') + ' ' + parts[0];
+}
+
+function matchesHtml(list, tid){
+  var p = state.players;
+  var ms = (list || []).map(function(m,i){ return {m:m,i:i}; }).sort(function(a,b){
+    var da = a.m.date || '', db = b.m.date || '';
+    if(da !== db) return da < db ? 1 : -1;
+    return a.i - b.i;
+  }).map(function(x){ return x.m; });
+  if(!ms.length){
+    return '<div class="empty">Nothing played here yet.' + (canEdit ? ' Add the first match and start the argument.' : '') + '</div>';
+  }
+  var out = '<div class="matches">';
+  ms.forEach(function(m){
+    var w = matchWinner(m);
+    out += '<div class="match">';
+    if(m.date) out += '<div class="mdate">' + esc(fmtDate(m.date)) + '</div>';
+    out += '<div class="side' + (w === 0 ? ' win' : '') + '">' + esc(p[0].name) + '</div>';
+    out += '<div class="sets">' + (m.sets || []).map(function(st){
+      return '<span class="setbox">' + Number(st[0]) + '–' + Number(st[1]) + '</span>';
+    }).join('') + '</div>';
+    out += '<div class="side r' + (w === 1 ? ' win' : '') + '">' + esc(p[1].name) + '</div>';
+    out += '<div class="rowacts">' + (canEdit
+      ? '<button class="btn small" data-act="edit-match" data-id="' + tid + '" data-m="' + m.id + '">Edit</button>'
+      : '') + '</div>';
+    if(m.note) out += '<div class="mnote">' + esc(m.note) + '</div>';
+    out += '</div>';
+  });
+  return out + '</div>';
+}
+function bucket(tid){
+  if(tid === 'friendly'){
+    if(!state.friendlies) state.friendlies = [];
+    return { get: function(){ return state.friendlies; }, set: function(v){ state.friendlies = v; } };
+  }
+  var t = tour(tid);
+  if(!t) return null;
+  if(!t.matches) t.matches = [];
+  return { get: function(){ return t.matches; }, set: function(v){ t.matches = v; } };
 }
 
 /* ---------------- render ---------------- */
@@ -438,30 +476,24 @@ function render(){
     }
     html += '</div>';
 
-    var ms = (t.matches || []).map(function(m,i){ return {m:m,i:i}; }).sort(function(a,b){ var da = a.m.date || '', db = b.m.date || ''; if(da !== db) return da < db ? 1 : -1; return a.i - b.i; }).map(function(x){ return x.m; });
-    if(!ms.length){
-      html += '<div class="empty">No matches here yet.' + (canEdit ? ' Add the first one and start the argument.' : '') + '</div>';
-    } else {
-      html += '<div class="matches">';
-      ms.forEach(function(m){
-        var w = matchWinner(m);
-        html += '<div class="match">';
-        if(m.date) html += '<div class="mdate">' + esc(fmtDate(m.date)) + '</div>';
-        html += '<div class="side' + (w === 0 ? ' win' : '') + '">' + esc(p[0].name) + '</div>';
-        html += '<div class="sets">' + (m.sets || []).map(function(s){
-          return '<span class="setbox">' + Number(s[0]) + '–' + Number(s[1]) + '</span>';
-        }).join('') + '</div>';
-        html += '<div class="side r' + (w === 1 ? ' win' : '') + '">' + esc(p[1].name) + '</div>';
-        html += '<div class="rowacts">' + (canEdit
-          ? '<button class="btn small" data-act="edit-match" data-id="' + t.id + '" data-m="' + m.id + '">Edit</button>'
-          : '') + '</div>';
-        if(m.note) html += '<div class="mnote">' + esc(m.note) + '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
-    }
+    html += matchesHtml(t.matches, t.id);
     html += '</div>';
   }
+
+  /* friendlies */
+  var fr = state.friendlies || [];
+  var fw = [0,0];
+  fr.forEach(function(m){ var w = matchWinner(m); if(w >= 0) fw[w]++; });
+  html += '<h2 class="sec">Friendlies</h2>';
+  html += '<div class="detail"><div class="detail-head"><div>'
+    + '<h3>🍻 Off the record</h3>'
+    + '<div class="sub">Casual matches outside the tournaments. '
+    + (fr.length ? 'Standing at ' + fw[0] + '–' + fw[1] + ', and none of it counts towards the score above.' : 'None played yet.')
+    + '</div></div>'
+    + (canEdit ? '<div class="rowacts"><button class="btn small primary" data-act="add-match" data-id="friendly">Add friendly</button></div>' : '')
+    + '</div>';
+  html += matchesHtml(fr, 'friendly');
+  html += '</div>';
 
   app.innerHTML = html;
 }
@@ -520,9 +552,9 @@ function readSets(bg){
   return out;
 }
 function matchModal(tid, mid){
-  var t = tour(tid);
-  if(!t) return;
-  var m = mid ? (t.matches || []).filter(function(x){ return x.id === mid; })[0] : null;
+  var b = bucket(tid);
+  if(!b) return;
+  var m = mid ? b.get().filter(function(x){ return x.id === mid; })[0] : null;
   var today = new Date().toISOString().slice(0,10);
   var body = '<div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="' + esc(m ? m.date : today) + '"></div>'
     + '<div class="field"><label>Score — ' + esc(state.players[0].name) + ' vs ' + esc(state.players[1].name) + '</label>'
@@ -539,15 +571,15 @@ function matchModal(tid, mid){
       note: bg.querySelector('#f-note').value.trim()
     };
     if(m){
-      t.matches = t.matches.map(function(x){ return x.id === m.id ? data : x; });
+      b.set(b.get().map(function(x){ return x.id === m.id ? data : x; }));
     } else {
-      t.matches = (t.matches || []).concat([data]);
+      b.set(b.get().concat([data]));
     }
   }, left);
   if(m){
     bg.querySelector('[data-x="del"]').addEventListener('click', function(){
       if(!confirm('Delete this match for good?')) return;
-      t.matches = t.matches.filter(function(x){ return x.id !== m.id; });
+      b.set(b.get().filter(function(x){ return x.id !== m.id; }));
       closeModal(); render(); scheduleSave();
     });
   }
@@ -675,20 +707,18 @@ if(window.claude && typeof window.claude.use === 'function'){
   var local = localLoad();
   if(local){ state = local; render(); }
   setStatus('Saved in this browser');
-  var xb = document.getElementById('exportBtn');
-  if(xb){
-    xb.hidden = false;
-    xb.addEventListener('click', function(){
+  document.addEventListener('keydown', function(e){
+    if(e.shiftKey && (e.key === 'D' || e.key === 'd') && !/input|textarea|select/i.test((e.target.tagName || ''))){
       var doc = buildDoc(state);
-      if(!doc){ alert('Could not build the file.'); return; }
+      if(!doc) return;
       var blob = new Blob([doc], {type:'text/html'});
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'index.html';
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
-    });
-  }
+    }
+  });
 }
 })();
 </script></body></html>
