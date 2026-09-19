@@ -167,7 +167,7 @@ button{font-family:inherit}
 .modal h3{font-family:var(--serif);font-size:22px;letter-spacing:.05em;text-transform:uppercase;margin:0 0 16px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12px;letter-spacing:.09em;color:rgba(237,245,240,.6);margin-bottom:6px}
-.field input[type=text],.field input[type=date],.field input[type=number],.field select,.field textarea{
+.field input[type=text],.field input[type=password],.field input[type=date],.field input[type=number],.field select,.field textarea{
   width:100%;background:rgba(4,18,27,.7);border:1px solid var(--line);border-radius:8px;color:var(--chalk);
   padding:9px 11px;font-size:14px;font-family:inherit}
 .field textarea{resize:vertical;min-height:58px}
@@ -219,7 +219,7 @@ footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240
   </footer>
 </div>
 
-<script id="state" type="application/json">{"title": "The Rivalry", "subtitle": "Two guys. One net. Zero chill.", "players": [{"name": "Dima", "photo": "A"}, {"name": "Mykyta", "photo": "B"}], "tournaments": [{"id": "t1", "emoji": "🥟", "name": "Pelmen' Open", "surface": "Vlora Hard · first to 2 wins", "champion": 0, "prize": "", "matches": [{"id": "m1", "date": "", "sets": [[2, 6], [6, 3], [6, 1]], "note": "Match 1 of the series"}, {"id": "m2", "date": "", "sets": [[4, 6], [6, 0], [6, 3]], "note": "Match 2 — Dima seals the title 2–0"}]}, {"id": "t2", "emoji": "🥥", "name": "Kokos Cup", "surface": "Vlora Hard · first to 2 wins", "champion": null, "prize": "", "matches": []}], "friendlies": [{"id": "f1", "date": "", "sets": [[7, 6], [5, 7], [6, 3]], "note": "Friendly, no trophy on the line"}]}</script>
+<script id="state" type="application/json">{"title": "The Rivalry", "subtitle": "Two guys. One net. Zero chill.", "players": [{"name": "Dima", "photo": "A"}, {"name": "Mykyta", "photo": "B"}], "tournaments": [{"id": "t1", "emoji": "🥟", "name": "Pelmen' Open", "surface": "Vlora Hard · first to 2 wins", "champion": 0, "prize": "", "matches": [{"id": "m1", "date": "", "sets": [[2, 6], [6, 3], [6, 1]], "note": "Match 1 of the series"}, {"id": "m2", "date": "", "sets": [[4, 6], [6, 0], [6, 3]], "note": "Match 2 — Dima seals the title 2–0"}]}, {"id": "t2", "emoji": "🥥", "name": "Kokos Cup", "surface": "Vlora Hard · first to 2 wins", "champion": null, "prize": "", "matches": []}], "friendlies": [{"id": "f1", "date": "", "sets": [[7, 6], [5, 7], [6, 3]], "note": "Friendly, no trophy on the line"}], "updatedAt": 0}</script>
 
 <script>
 (function(){
@@ -258,8 +258,22 @@ function localLoad(){
   }catch(e){}
   return null;
 }
-var SYNC_URL = 'https://jsonblob.com/api/jsonBlob/01a0b97e-77e6-73c1-bf8d-afc3be26af81';
+var GH_KEY = 'rivalry:gh';
+var DATA_PATH = 'data.json';
 var syncTimer = null, syncBusy = false, syncPending = false;
+
+function ghConfig(){
+  try{
+    var c = JSON.parse(localStorage.getItem(GH_KEY) || 'null');
+    if(c && c.owner && c.repo && c.token) return c;
+  }catch(e){}
+  return null;
+}
+function b64(str){
+  var bytes = new TextEncoder().encode(str), bin = '';
+  for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
 function syncNote(text){
   var el = document.getElementById('syncNote');
   if(!el) return;
@@ -269,43 +283,77 @@ function syncNote(text){
 function queueSync(){
   syncPending = true;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(pushRemote, 700);
+  syncTimer = setTimeout(pushRemote, 800);
 }
 function pushRemote(){
+  var cfg = ghConfig();
+  if(!cfg){ syncNote('Saved in this browser \u2014 press Shift + S to connect GitHub'); return; }
   if(syncBusy || !syncPending) return;
   syncBusy = true; syncPending = false;
   syncNote('Saving\u2026');
-  fetch(SYNC_URL, {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-    body: JSON.stringify(state)
-  }).then(function(r){
-    syncBusy = false;
-    if(!r.ok) throw new Error('http ' + r.status);
-    syncNote('');
-    if(syncPending) pushRemote();
-  }).catch(function(){
-    syncBusy = false;
-    syncNote('Offline \u2014 saved in this browser only');
-  });
+  var api = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + DATA_PATH;
+  var headers = {'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json'};
+  fetch(api + '?ref=' + encodeURIComponent(cfg.branch) + '&t=' + Date.now(), {headers: headers, cache: 'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(info){
+      var body = {
+        message: 'Update scores',
+        content: b64(JSON.stringify(state, null, 2)),
+        branch: cfg.branch
+      };
+      if(info && info.sha) body.sha = info.sha;
+      return fetch(api, {method: 'PUT', headers: headers, body: JSON.stringify(body)});
+    })
+    .then(function(r){
+      syncBusy = false;
+      if(!r.ok) throw new Error('http ' + r.status);
+      syncNote('Saved to GitHub');
+      setTimeout(function(){ if(!syncBusy && !syncPending) syncNote(''); }, 2500);
+      if(syncPending) pushRemote();
+    })
+    .catch(function(){
+      syncBusy = false;
+      syncNote('Could not save to GitHub \u2014 kept in this browser');
+    });
 }
 function pullRemote(){
-  fetch(SYNC_URL, {headers: {'Accept': 'application/json'}, cache: 'no-store'}).then(function(r){
+  fetch(DATA_PATH + '?t=' + Date.now(), {cache: 'no-store'}).then(function(r){
     if(!r.ok) throw new Error('http ' + r.status);
     return r.json();
   }).then(function(data){
-    if(data && data.players && data.tournaments){
-      state = data;
-      if(!tour(selected)) selected = state.tournaments.length ? state.tournaments[0].id : null;
-      localSave();
-      render();
-      syncNote('');
-    } else {
-      queueSync();
-    }
-  }).catch(function(){
-    syncNote('Offline \u2014 saved in this browser only');
-  });
+    if(!data || !data.players || !data.tournaments) return;
+    if(Number(data.updatedAt || 0) < Number(state.updatedAt || 0)) return;
+    state = data;
+    if(!tour(selected)) selected = state.tournaments.length ? state.tournaments[0].id : null;
+    localSave();
+    render();
+  }).catch(function(){});
+}
+function ghModal(){
+  var cfg = ghConfig() || {};
+  var body = '<div class="field"><label for="g-owner">GitHub username</label><input id="g-owner" type="text" value="' + esc(cfg.owner || '') + '" placeholder="your-github-login"></div>'
+    + '<div class="field"><label for="g-repo">Repository</label><input id="g-repo" type="text" value="' + esc(cfg.repo || 'pelmen-grand-slam') + '"></div>'
+    + '<div class="field"><label for="g-branch">Branch</label><input id="g-branch" type="text" value="' + esc(cfg.branch || 'main') + '"></div>'
+    + '<div class="field"><label for="g-token">Access token</label><input id="g-token" type="password" value="' + esc(cfg.token || '') + '" placeholder="github_pat_..."><p class="hint">Fine-grained token with Contents: Read and write on this repository. It stays in this browser only.</p></div>';
+  var left = cfg.token ? '<button class="btn left" data-x="out">Disconnect</button>' : '';
+  var bg = openModal('Connect GitHub', body, function(bg){
+    var c = {
+      owner: bg.querySelector('#g-owner').value.trim(),
+      repo: bg.querySelector('#g-repo').value.trim(),
+      branch: bg.querySelector('#g-branch').value.trim() || 'main',
+      token: bg.querySelector('#g-token').value.trim()
+    };
+    if(!c.owner || !c.repo || !c.token){ alert('Fill in username, repository and token.'); return false; }
+    try{ localStorage.setItem(GH_KEY, JSON.stringify(c)); }catch(e){}
+    queueSync();
+  }, left);
+  if(cfg.token){
+    bg.querySelector('[data-x="out"]').addEventListener('click', function(){
+      try{ localStorage.removeItem(GH_KEY); }catch(e){}
+      closeModal();
+      syncNote('Disconnected from GitHub');
+    });
+  }
 }
 function setStatus(text, busy){
   var el = document.getElementById('status');
@@ -317,7 +365,7 @@ function setStatus(text, busy){
 function scheduleSave(){
   dirty = true;
   setStatus(mode === 'live' ? 'Saving…' : 'Saved on this device', mode === 'live');
-  if(mode !== 'live'){ localSave(); dirty = false; queueSync(); return; }
+  if(mode !== 'live'){ state.updatedAt = Date.now(); localSave(); dirty = false; queueSync(); return; }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 900);
 }
@@ -760,6 +808,10 @@ if(window.claude && typeof window.claude.use === 'function'){
     if(!syncBusy && !syncPending) pullRemote();
   });
   document.addEventListener('keydown', function(e){
+    if(e.shiftKey && (e.key === 'S' || e.key === 's') && !/input|textarea|select/i.test((e.target.tagName || ''))){
+      ghModal();
+      return;
+    }
     if(e.shiftKey && (e.key === 'D' || e.key === 'd') && !/input|textarea|select/i.test((e.target.tagName || ''))){
       var doc = buildDoc(state);
       if(!doc) return;
