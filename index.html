@@ -210,7 +210,7 @@ footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240
 <div class="wrap">
   <div class="topbar">
     <div class="brand"><i class="ball"></i><span>Pelmen' Grand Slam</span></div>
-
+    <span class="status" id="syncNote" style="display:none"></span>
   </div>
   <div id="app"></div>
   <footer>
@@ -258,6 +258,55 @@ function localLoad(){
   }catch(e){}
   return null;
 }
+var SYNC_URL = 'https://jsonblob.com/api/jsonBlob/01a0b97e-77e6-73c1-bf8d-afc3be26af81';
+var syncTimer = null, syncBusy = false, syncPending = false;
+function syncNote(text){
+  var el = document.getElementById('syncNote');
+  if(!el) return;
+  el.textContent = text || '';
+  el.style.display = text ? '' : 'none';
+}
+function queueSync(){
+  syncPending = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushRemote, 700);
+}
+function pushRemote(){
+  if(syncBusy || !syncPending) return;
+  syncBusy = true; syncPending = false;
+  syncNote('Saving\u2026');
+  fetch(SYNC_URL, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    body: JSON.stringify(state)
+  }).then(function(r){
+    syncBusy = false;
+    if(!r.ok) throw new Error('http ' + r.status);
+    syncNote('');
+    if(syncPending) pushRemote();
+  }).catch(function(){
+    syncBusy = false;
+    syncNote('Offline \u2014 saved in this browser only');
+  });
+}
+function pullRemote(){
+  fetch(SYNC_URL, {headers: {'Accept': 'application/json'}, cache: 'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http ' + r.status);
+    return r.json();
+  }).then(function(data){
+    if(data && data.players && data.tournaments){
+      state = data;
+      if(!tour(selected)) selected = state.tournaments.length ? state.tournaments[0].id : null;
+      localSave();
+      render();
+      syncNote('');
+    } else {
+      queueSync();
+    }
+  }).catch(function(){
+    syncNote('Offline \u2014 saved in this browser only');
+  });
+}
 function setStatus(text, busy){
   var el = document.getElementById('status');
   if(!el) return;
@@ -268,7 +317,7 @@ function setStatus(text, busy){
 function scheduleSave(){
   dirty = true;
   setStatus(mode === 'live' ? 'Saving…' : 'Saved on this device', mode === 'live');
-  if(mode !== 'live'){ localSave(); dirty = false; setStatus('Saved on this device'); return; }
+  if(mode !== 'live'){ localSave(); dirty = false; queueSync(); return; }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 900);
 }
@@ -706,7 +755,10 @@ if(window.claude && typeof window.claude.use === 'function'){
   mode = 'local';
   var local = localLoad();
   if(local){ state = local; render(); }
-  setStatus('Saved in this browser');
+  pullRemote();
+  window.addEventListener('focus', function(){
+    if(!syncBusy && !syncPending) pullRemote();
+  });
   document.addEventListener('keydown', function(e){
     if(e.shiftKey && (e.key === 'D' || e.key === 'd') && !/input|textarea|select/i.test((e.target.tagName || ''))){
       var doc = buildDoc(state);
