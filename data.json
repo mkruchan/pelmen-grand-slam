@@ -1,0 +1,95 @@
+{
+  "title": "The Rivalry",
+  "subtitle": "Two guys. One net. Zero chill.",
+  "players": [
+    {
+      "name": "Dima",
+      "photo": "A"
+    },
+    {
+      "name": "Mykyta",
+      "photo": "B"
+    }
+  ],
+  "tournaments": [
+    {
+      "id": "t1",
+      "emoji": "🥟",
+      "name": "Pelmen' Open",
+      "surface": "Vlora Hard · first to 2 wins",
+      "champion": 0,
+      "prize": "",
+      "matches": [
+        {
+          "id": "m1",
+          "date": "",
+          "sets": [
+            [
+              2,
+              6
+            ],
+            [
+              6,
+              3
+            ],
+            [
+              6,
+              1
+            ]
+          ],
+          "note": "Match 1 of the series"
+        },
+        {
+          "id": "m2",
+          "date": "",
+          "sets": [
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              0
+            ],
+            [
+              6,
+              3
+            ]
+          ],
+          "note": "Match 2 — Dima seals the title 2–0"
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "emoji": "🥥",
+      "name": "Kokos Cup",
+      "surface": "Vlora Hard · first to 2 wins",
+      "champion": null,
+      "prize": "",
+      "matches": []
+    }
+  ],
+  "friendlies": [
+    {
+      "id": "f1",
+      "date": "",
+      "sets": [
+        [
+          7,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6,
+          3
+        ]
+      ],
+      "note": "Friendly, no trophy on the line"
+    }
+  ],
+  "updatedAt": 1
+}
