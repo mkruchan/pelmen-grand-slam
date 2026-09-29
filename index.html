@@ -131,11 +131,14 @@ h2.sec:after{content:"";flex:1;height:1px;background:var(--line)}
 .detail-head .sub{font-size:12.5px;color:rgba(237,245,240,.6);margin-top:3px}
 .rowacts{display:flex;gap:8px;flex-wrap:wrap}
 .matches{padding:6px 10px 14px}
-.match{display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:center;padding:12px 8px;border-bottom:1px dashed rgba(237,245,240,.14)}
+.match{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:12px 8px;border-bottom:1px dashed rgba(237,245,240,.14);border-radius:10px}
+.match.editable{cursor:pointer}
+.match.editable:hover{background:rgba(237,245,240,.05)}
 .match:last-child{border-bottom:none}
 .match .side{font-family:var(--serif);font-size:17px;letter-spacing:.04em;text-transform:uppercase;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .match .side.r{text-align:right}
 .match .side.win{color:var(--ball)}
+.match .side.win.w0{color:#9BD6F5}
 .match .side.win:before{content:"●";font-size:9px;vertical-align:middle;margin-right:6px}
 .match .side.r.win:before{content:none}
 .match .side.r.win:after{content:"●";font-size:9px;vertical-align:middle;margin-left:6px}
@@ -182,6 +185,40 @@ button{font-family:inherit}
   padding:10px 18px;border-radius:999px;font-weight:600;font-size:13.5px;box-shadow:0 12px 30px -10px rgba(0,0,0,.7)}
 footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240,.4);line-height:1.6}
 
+.detail + .detail{margin-top:14px}
+.detail.focused{border-color:var(--ball)}
+.setflow{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:22px}
+.mgroup{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:rgba(4,18,27,.4)}
+.mg-win{font-family:var(--serif);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-right:2px}
+.mgroup.w0{border-color:rgba(142,208,242,.5);background:linear-gradient(180deg,rgba(142,208,242,.12),rgba(4,18,27,.45))}
+.mgroup.w0 .mg-win{color:#9BD6F5}
+.setbox.s0{border-color:rgba(142,208,242,.6);color:#9BD6F5}
+.setbox.s1{border-color:rgba(217,242,79,.6);color:var(--ball)}
+.mgroup.w1{border-color:rgba(217,242,79,.5);background:linear-gradient(180deg,rgba(217,242,79,.12),rgba(4,18,27,.45))}
+.mgroup.w1 .mg-win{color:var(--ball)}
+
+.mgroup.wd{border-color:rgba(232,197,90,.6);background:linear-gradient(180deg,rgba(232,197,90,.14),rgba(4,18,27,.45))}
+.mgroup.wd .mg-win{color:#F4DC8C}
+.mg-emoji{font-size:14px;line-height:1}
+.setflow .setbox{font-size:14px;padding:2px 8px;background:transparent}
+.setflow-label{text-align:center;font-size:12px;letter-spacing:.04em;color:rgba(237,245,240,.45);margin:10px 0 0}
+.framewrap{position:relative;width:min(100%,208px);margin:0 auto}
+.skewer{position:absolute;bottom:-10px;width:124px;pointer-events:none;filter:drop-shadow(0 6px 12px rgba(0,0,0,.55));z-index:4}
+.skewer svg{width:100%;height:auto;display:block}
+.skewer.s0{left:-32px;transform:rotate(-16deg)}
+.skewer.s1{right:-32px;transform:rotate(16deg) scaleX(-1)}
+@media (max-width:640px){.skewer{width:86px;bottom:-6px}.skewer.s0{left:-14px}.skewer.s1{right:-14px}}
+.trophy{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:10px}
+.trophy .cup{width:34px;height:40px;display:block;filter:drop-shadow(0 4px 10px rgba(217,242,79,.35))}
+.trophy.has .cup{animation:bob 3.2s ease-in-out infinite}
+.trophy.empty{opacity:.28;filter:grayscale(1)}
+.trophy .tcount{font-family:var(--serif);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(237,245,240,.7)}
+.trophy.has .tcount{color:var(--ball)}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+.glint{animation:glint 3.6s linear infinite}
+@keyframes glint{0%,72%{opacity:0}80%{opacity:.85}100%{opacity:0}}
+#confetti{position:fixed;inset:0;z-index:3;pointer-events:none}
+.setbox.draw{border:1.5px solid #E8C55A;color:#F4DC8C;letter-spacing:.08em;background:linear-gradient(180deg,rgba(232,197,90,.18),rgba(232,197,90,.04));box-shadow:0 0 14px rgba(232,197,90,.35), inset 0 0 8px rgba(232,197,90,.15)}
 @media (max-width:640px){
   .face-off{gap:6px}
   .frame{border-radius:80px 80px 12px 12px}
@@ -206,6 +243,7 @@ footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240
 </svg>
 </div>
 <div class="fuzz"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
 
 <div class="wrap">
   <div class="topbar">
@@ -219,7 +257,7 @@ footer{margin-top:44px;text-align:center;font-size:12.5px;color:rgba(237,245,240
   </footer>
 </div>
 
-<script id="state" type="application/json">{"title": "The Rivalry", "subtitle": "Two guys. One net. Zero chill.", "players": [{"name": "Dima", "photo": "A"}, {"name": "Mykyta", "photo": "B"}], "tournaments": [{"id": "t1", "emoji": "🥟", "name": "Pelmen' Open", "surface": "Vlora Hard · first to 2 wins", "champion": 0, "prize": "", "matches": [{"id": "m1", "date": "", "sets": [[2, 6], [6, 3], [6, 1]], "note": "Match 1 of the series"}, {"id": "m2", "date": "", "sets": [[4, 6], [6, 0], [6, 3]], "note": "Match 2 — Dima seals the title 2–0"}]}, {"id": "t2", "emoji": "🥥", "name": "Kokos Cup", "surface": "Vlora Hard · first to 2 wins", "champion": null, "prize": "", "matches": []}], "friendlies": [{"id": "f1", "date": "", "sets": [[7, 6], [5, 7], [6, 3]], "note": "Friendly, no trophy on the line"}], "updatedAt": 0}</script>
+<script id="state" type="application/json">{"title": "The Rivalry", "subtitle": "Two guys. One net. Zero chill.", "players": [{"name": "Dima", "photo": "A"}, {"name": "Mykyta", "photo": "B"}], "tournaments": [{"id": "t1", "emoji": "🥟", "name": "Pelmen' Open", "surface": "Vlora Hard · first to 2 wins", "champion": 0, "prize": "", "matches": [{"id": "m1", "date": "", "sets": [[2, 6], [6, 3], [6, 1]], "note": "Match 1 of the series"}, {"id": "m2", "date": "", "sets": [[4, 6], [6, 0], [6, 3]], "note": "Match 2 — Dima seals the title 2–0"}]}, {"id": "t2", "emoji": "🥥", "name": "Kokos Cup", "surface": "Vlora Hard · first to 1 win", "champion": 1, "prize": "", "matches": [{"id": "k1", "date": "", "sets": [[3, 6], [6, 7]], "note": "Mykyta takes it in straight sets"}]}, {"id": "t3", "emoji": "🍢", "name": "Shashlyk Open", "surface": "Vlora Hard · ceremonial draw", "champion": "both", "prize": "One skewer each, split down the middle", "matches": [{"id": "s1", "date": "", "sets": [[6, 1], [4, 6], [6, 6]], "note": "Called off at 6–6 — honourable draw, a point each"}]}], "friendlies": [{"id": "f1", "date": "", "sets": [[7, 6], [5, 7], [6, 3]], "note": "Friendly, no trophy on the line"}], "updatedAt": 0}</script>
 
 <script>
 (function(){
@@ -418,17 +456,18 @@ function allMatches(){
   return out;
 }
 function stats(){
-  var s = {wins:[0,0], sets:[0,0], games:[0,0], bagels:[0,0], played:0, streakBy:-1, streak:0};
+  var s = {wins:[0,0], sets:[0,0], games:[0,0], bagels:[0,0], played:0, draws:0, tiedSets:0, streakBy:-1, streak:0};
   var chrono = allMatches().slice().sort(function(a,b){ return (a.date||'') < (b.date||'') ? -1 : 1; });
   chrono.forEach(function(m){
     s.played++;
     var w = matchWinner(m);
-    if(w >= 0) s.wins[w]++;
+    if(w >= 0) s.wins[w]++; else s.draws++;
     (m.sets || []).forEach(function(st){
       s.games[0] += Number(st[0]) || 0;
       s.games[1] += Number(st[1]) || 0;
-      if(st[0] > st[1]){ s.sets[0]++; if(Number(st[1]) === 0) s.bagels[0]++; }
-      else if(st[1] > st[0]){ s.sets[1]++; if(Number(st[0]) === 0) s.bagels[1]++; }
+      if(st[0] > st[1]){ s.sets[0]++; }
+      else if(st[1] > st[0]){ s.sets[1]++; }
+      else { s.sets[0]++; s.sets[1]++; s.tiedSets++; }
     });
     if(w >= 0){
       if(w === s.streakBy) s.streak++;
@@ -445,6 +484,56 @@ function fmtDate(d){
   return Number(parts[2]) + ' ' + (months[Number(parts[1]) - 1] || '') + ' ' + parts[0];
 }
 
+function champLabel(t){
+  if(t.champion === 'both') return state.players[0].name + ' & ' + state.players[1].name;
+  if(t.champion === 0 || t.champion === 1) return state.players[t.champion].name;
+  return null;
+}
+function setBox(sc){
+  var a = Number(sc[0]), b = Number(sc[1]);
+  var cls = a === b ? 'draw' : (a > b ? 's0' : 's1');
+  return '<span class="setbox ' + cls + '">' + a + '–' + b + '</span>';
+}
+function skewerHtml(i){
+  return '<div class="skewer s' + i + '" aria-hidden="true"><svg viewBox="0 0 118 34">'
+    + '<defs><linearGradient id="sk' + i + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#E7EEF2"/><stop offset="0.5" stop-color="#9FB0BA"/><stop offset="1" stop-color="#5E6E78"/>'
+    + '</linearGradient>'
+    + '<linearGradient id="mt' + i + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#C0713A"/><stop offset="0.55" stop-color="#954922"/><stop offset="1" stop-color="#6E3317"/>'
+    + '</linearGradient></defs>'
+    + '<rect x="2" y="15" width="106" height="3.4" rx="1.7" fill="url(#sk' + i + ')"/>'
+    + '<path d="M108 14.6L118 16.7L108 18.8z" fill="url(#sk' + i + ')"/>'
+    + '<g fill="url(#mt' + i + ')" stroke="#4A2110" stroke-width="1.2">'
+    + '<rect x="12" y="5" width="21" height="24" rx="7"/>'
+    + '<rect x="36" y="4" width="22" height="26" rx="7"/>'
+    + '<rect x="61" y="5.5" width="21" height="23" rx="7"/>'
+    + '<rect x="85" y="6" width="19" height="22" rx="7"/>'
+    + '</g>'
+    + '<g stroke="#3A1A0B" stroke-width="1.1" opacity="0.55" stroke-linecap="round">'
+    + '<path d="M16 11h13M16 22h13M40 10h14M40 23h14M65 12h13M65 22h13M88 12h12M88 22h12"/>'
+    + '</g>'
+    + '<g fill="#F3DFA2" opacity="0.5">'
+    + '<circle cx="20" cy="9" r="1.1"/><circle cx="47" cy="8.5" r="1.1"/><circle cx="70" cy="10" r="1.1"/><circle cx="94" cy="10" r="1"/>'
+    + '</g>'
+    + '</svg></div>';
+}
+function trophyHtml(count, i){
+  var cls = count > 0 ? 'trophy has' : 'trophy empty';
+  return '<div class="' + cls + '" style="animation-delay:' + (i * 0.4) + 's">'
+    + '<svg class="cup" viewBox="0 0 48 56" aria-hidden="true">'
+    + '<defs><linearGradient id="g' + i + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#F2FF8C"/><stop offset="0.5" stop-color="#D9F24F"/><stop offset="1" stop-color="#8FA52E"/>'
+    + '</linearGradient></defs>'
+    + '<path d="M13 5h22v13a11 11 0 0 1-22 0z" fill="url(#g' + i + ')"/>'
+    + '<path d="M13 8H7a7 7 0 0 0 7 9zM35 8h6a7 7 0 0 1-7 9z" fill="none" stroke="url(#g' + i + ')" stroke-width="2.5" stroke-linejoin="round"/>'
+    + '<rect x="21" y="29" width="6" height="8" fill="url(#g' + i + ')"/>'
+    + '<path d="M14 45h20l2 6H12z" fill="url(#g' + i + ')"/>'
+    + '<path class="glint" d="M18 9l3 0-6 11-2-4z" fill="#fff" opacity="0"/>'
+    + '</svg>'
+    + '<span class="tcount">' + count + ' title' + (count === 1 ? '' : 's') + '</span>'
+    + '</div>';
+}
 function matchesHtml(list, tid){
   var p = state.players;
   var ms = (list || []).map(function(m,i){ return {m:m,i:i}; }).sort(function(a,b){
@@ -458,16 +547,12 @@ function matchesHtml(list, tid){
   var out = '<div class="matches">';
   ms.forEach(function(m){
     var w = matchWinner(m);
-    out += '<div class="match">';
+    out += '<div class="match' + (canEdit ? ' editable' : '') + '"' + (canEdit ? ' data-act="edit-match" data-id="' + tid + '" data-m="' + m.id + '"' : '') + '>';
     if(m.date) out += '<div class="mdate">' + esc(fmtDate(m.date)) + '</div>';
-    out += '<div class="side' + (w === 0 ? ' win' : '') + '">' + esc(p[0].name) + '</div>';
-    out += '<div class="sets">' + (m.sets || []).map(function(st){
-      return '<span class="setbox">' + Number(st[0]) + '–' + Number(st[1]) + '</span>';
-    }).join('') + '</div>';
-    out += '<div class="side r' + (w === 1 ? ' win' : '') + '">' + esc(p[1].name) + '</div>';
-    out += '<div class="rowacts">' + (canEdit
-      ? '<button class="btn small" data-act="edit-match" data-id="' + tid + '" data-m="' + m.id + '">Edit</button>'
-      : '') + '</div>';
+    out += '<div class="side' + (w === 0 ? ' win w0' : '') + '">' + esc(p[0].name) + '</div>';
+    out += '<div class="sets">' + (m.sets || []).map(setBox).join('')
+      + (w < 0 ? '<span class="setbox draw">draw</span>' : '') + '</div>';
+    out += '<div class="side r' + (w === 1 ? ' win w1' : '') + '">' + esc(p[1].name) + '</div>';
     if(m.note) out += '<div class="mnote">' + esc(m.note) + '</div>';
     out += '</div>';
   });
@@ -490,48 +575,63 @@ function render(){
   var app = document.getElementById('app');
   var p = state.players;
   var champFlags = [0,0];
-  state.tournaments.forEach(function(t){ if(t.champion === 0 || t.champion === 1) champFlags[t.champion]++; });
+  state.tournaments.forEach(function(t){
+    if(t.champion === 'both'){ champFlags[0]++; champFlags[1]++; }
+    else if(t.champion === 0 || t.champion === 1) champFlags[t.champion]++;
+  });
 
   var html = '';
 
   /* hero */
   html += '<section class="hero">';
-  html += '<h1 class="hero-title">' + esc(state.title) + (canEdit ? ' <button class="iconbtn" data-act="edit-title" aria-label="Edit title">✎</button>' : '') + '</h1>';
+  html += '<h1 class="hero-title">' + esc(state.title) + '</h1>';
   html += '<p class="hero-sub">' + esc(state.subtitle) + '</p>';
   html += '<div class="face-off">';
   [0,1].forEach(function(i){
     if(i === 1){
       html += '<div class="center-col"><span class="netline"></span>'
-            + '<div class="bigscore">' + st.wins[0] + ' : ' + st.wins[1] + '</div>'
-            + '<span class="vs">MATCHES WON</span><span class="netline"></span></div>';
+            + '<div class="bigscore">' + st.sets[0] + ' : ' + st.sets[1] + '</div>'
+            + '<span class="vs">SETS WON</span><span class="netline"></span></div>';
     }
-    var isChamp = st.wins[i] > st.wins[1-i];
+    var isChamp = st.sets[i] > st.sets[1-i];
     html += '<div class="player">'
-      + '<div class="frame' + (isChamp ? ' champ' : '') + '"><img alt="' + esc(p[i].name) + '" src="' + PHOTOS[p[i].photo] + '"></div>'
-      + '<div class="pname">' + esc(p[i].name) + (canEdit ? '<button class="iconbtn" data-act="edit-name" data-i="' + i + '" aria-label="Rename">✎</button>' : '') + '</div>'
-      + '<div class="pwins">' + champFlags[i] + ' title' + (champFlags[i] === 1 ? '' : 's') + '</div>'
+      + '<div class="framewrap"><div class="frame' + (isChamp ? ' champ' : '') + '"><img alt="' + esc(p[i].name) + '" src="' + PHOTOS[p[i].photo] + '"></div>' + skewerHtml(i) + '</div>'
+      + '<div class="pname">' + esc(p[i].name) + '</div>'
+      + trophyHtml(champFlags[i], i)
       + '</div>';
   });
   html += '</div>';
-  html += '<div class="statline">'
-    + '<span class="stat">Matches played <b>' + st.played + '</b></span>'
-    + '<span class="stat">Sets <b>' + st.sets[0] + '–' + st.sets[1] + '</b></span>'
-    + '<span class="stat">Games <b>' + st.games[0] + '–' + st.games[1] + '</b></span>'
-    + (st.streakBy >= 0 && st.streak > 1 ? '<span class="stat">' + esc(p[st.streakBy].name) + ' on a streak <b>' + st.streak + '</b></span>' : '')
-    + '</div>';
-  if(canEdit) html += '<div class="statline"><button class="btn small" data-act="swap">Swap photos</button></div>';
+  var flow = [];
+  state.tournaments.forEach(function(t){
+    (t.matches || []).map(function(m,k){ return {m:m,k:k}; }).sort(function(a,b){
+      var da = a.m.date || '', db = b.m.date || '';
+      if(da !== db) return da < db ? -1 : 1;
+      return a.k - b.k;
+    }).forEach(function(x){ flow.push({t:t, m:x.m}); });
+  });
+  if(flow.length){
+    html += '<div class="setflow">' + flow.map(function(x){
+      var w = matchWinner(x.m);
+      var cls = w === 0 ? 'w0' : (w === 1 ? 'w1' : 'wd');
+      var who = w < 0 ? 'Shared' : p[w].name;
+      return '<span class="mgroup ' + cls + '"><span class="mg-emoji">' + esc(x.t.emoji || '🎾') + '</span>'
+        + '<span class="mg-win">' + esc(who) + '</span>'
+        + (x.m.sets || []).map(setBox).join('')
+        + '</span>';
+    }).join('') + '</div>';
+  }
   html += '<div id="flyball"></div>';
   html += '</section>';
 
   /* trophy cabinet */
   html += '<h2 class="sec">Trophy cabinet</h2><div class="cabinet">';
   [0,1].forEach(function(i){
-    var titles = state.tournaments.filter(function(t){ return t.champion === i; });
+    var titles = state.tournaments.filter(function(t){ return t.champion === i || t.champion === 'both'; });
     html += '<div class="cab"><h3>' + esc(p[i].name) + '</h3>'
       + '<div class="count">' + titles.length + '<small>titles won</small></div>';
     if(titles.length){
       html += '<ul>' + titles.map(function(t){
-        return '<li><span>' + esc(t.emoji || '🏆') + '</span><span><span class="t">' + esc(t.name) + '</span>'
+        return '<li><span>' + esc(t.emoji || '🏆') + '</span><span><span class="t">' + esc(t.name) + (t.champion === 'both' ? ' · shared' : '') + '</span>'
           + (t.prize ? '<em>Prize: ' + esc(t.prize) + '</em>' : '') + '</span></li>';
       }).join('') + '</ul>';
     } else {
@@ -545,7 +645,7 @@ function render(){
   html += '<h2 class="sec">Tournaments</h2><div class="tourn-grid">';
   state.tournaments.forEach(function(t){
     var n = (t.matches || []).length;
-    var champ = (t.champion === 0 || t.champion === 1) ? p[t.champion].name : null;
+    var champ = champLabel(t);
     html += '<button class="tcard' + (t.id === selected ? ' active' : '') + '" data-act="select" data-id="' + t.id + '">'
       + '<span class="emoji">' + esc(t.emoji || '🎾') + '</span>'
       + '<span class="tname">' + esc(t.name) + '</span>'
@@ -557,13 +657,12 @@ function render(){
   html += '</div>';
 
   /* detail */
-  var t = tour(selected);
-  if(t){
-    var champ = (t.champion === 0 || t.champion === 1) ? p[t.champion].name : null;
-    html += '<div class="detail"><div class="detail-head"><div>'
+  state.tournaments.forEach(function(t){
+    var champ = champLabel(t);
+    html += '<div class="detail' + (t.id === selected ? ' focused' : '') + '" id="panel-' + t.id + '"><div class="detail-head"><div>'
       + '<h3>' + esc(t.emoji || '🎾') + ' ' + esc(t.name) + '</h3>'
       + '<div class="sub">' + (t.surface ? esc(t.surface) + ' · ' : '')
-      + (champ ? 'Champion: ' + esc(champ) + (t.prize ? ' · Prize: ' + esc(t.prize) : '') : 'No champion crowned yet')
+      + (champ ? (t.champion === 'both' ? 'Champions: ' : 'Champion: ') + esc(champ) + (t.champion === 'both' ? ' (shared title)' : '') + (t.prize ? ' · Prize: ' + esc(t.prize) : '') : 'No champion crowned yet')
       + '</div></div>';
     if(canEdit){
       html += '<div class="rowacts">'
@@ -572,10 +671,9 @@ function render(){
         + '</div>';
     }
     html += '</div>';
-
     html += matchesHtml(t.matches, t.id);
     html += '</div>';
-  }
+  });
 
   /* friendlies */
   var fr = state.friendlies || [];
@@ -593,6 +691,7 @@ function render(){
   html += '</div>';
 
   app.innerHTML = html;
+  startRally();
 }
 
 /* ---------------- modal ---------------- */
@@ -690,6 +789,7 @@ function tournamentModal(tid){
       + '<option value="">Not decided</option>'
       + '<option value="0"' + (t && t.champion === 0 ? ' selected' : '') + '>' + esc(state.players[0].name) + '</option>'
       + '<option value="1"' + (t && t.champion === 1 ? ' selected' : '') + '>' + esc(state.players[1].name) + '</option>'
+      + '<option value="both"' + (t && t.champion === 'both' ? ' selected' : '') + '>Both — shared title</option>'
       + '</select></div>'
     + '<div class="field"><label for="f-prize">Prize</label><input id="f-prize" type="text" maxlength="80" value="' + esc(t ? t.prize : '') + '" placeholder="A plate of pelmeni and eternal glory"></div>';
   var left = t ? '<button class="btn left" data-x="del">Delete tournament</button>' : '';
@@ -700,7 +800,7 @@ function tournamentModal(tid){
       name: name,
       emoji: bg.querySelector('#f-emoji').value.trim() || '🎾',
       surface: bg.querySelector('#f-surface').value.trim(),
-      champion: bg.querySelector('#f-champ').value === '' ? null : Number(bg.querySelector('#f-champ').value),
+      champion: (function(v){ return v === '' ? null : (v === 'both' ? 'both' : Number(v)); })(bg.querySelector('#f-champ').value),
       prize: bg.querySelector('#f-prize').value.trim()
     };
     if(t){
@@ -742,7 +842,13 @@ document.addEventListener('click', function(e){
   var el = e.target.closest && e.target.closest('[data-act]');
   if(!el) return;
   var act = el.dataset.act;
-  if(act === 'select'){ selected = el.dataset.id; render(); return; }
+  if(act === 'select'){
+    selected = el.dataset.id;
+    render();
+    var panel = document.getElementById('panel-' + selected);
+    if(panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+    return;
+  }
   if(!canEdit) return;
   if(act === 'add-match'){ matchModal(el.dataset.id, null); }
   else if(act === 'edit-match'){ matchModal(el.dataset.id, el.dataset.m); }
@@ -759,27 +865,138 @@ document.addEventListener('click', function(e){
 });
 
 /* ---------------- boot ---------------- */
-function bounceBall(){
+
+/* ---------------- confetti ---------------- */
+function startConfetti(){
+  var cv = document.getElementById('confetti');
+  if(!cv) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var ctx = cv.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0, bits = [];
+  var colors = ['#D9F24F', '#EDF5F0', '#7FD8A6', '#8ED0F2', '#F2E14F'];
+  function resize(){
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  var zones = [];
+  function measureZones(){
+    var frames = document.querySelectorAll('.hero .frame');
+    zones = [];
+    if(frames.length >= 2){
+      for(var k = 0; k < 2; k++){
+        var r = frames[k].getBoundingClientRect();
+        var pad = r.width * 0.45;
+        zones.push({x0: r.left - pad, x1: r.right + pad});
+      }
+    } else {
+      zones.push({x0: 0, x1: W * 0.5});
+      zones.push({x0: W * 0.5, x1: W});
+    }
+  }
+  function spawn(y, side){
+    var ball = Math.random() < 0.12;
+    var z = zones[side] || {x0: 0, x1: W};
+    return {
+      side: side,
+      x: z.x0 + Math.random() * (z.x1 - z.x0),
+      y: y === undefined ? Math.random() * -H : y,
+      w: ball ? 7 : 5 + Math.random() * 5,
+      h: ball ? 7 : 8 + Math.random() * 7,
+      vy: 22 + Math.random() * 42,
+      vx: (Math.random() - 0.5) * 22,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 2.6,
+      sway: Math.random() * Math.PI * 2,
+      color: ball ? '#D9F24F' : colors[(Math.random() * colors.length) | 0],
+      ball: ball
+    };
+  }
+  resize();
+  measureZones();
+  var count = Math.round(Math.min(90, Math.max(32, W / 14)));
+  if(count % 2) count++;
+  for(var i = 0; i < count; i++) bits.push(spawn(undefined, i % 2));
+  var last = performance.now();
+  function frame(now){
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if(document.hidden){ requestAnimationFrame(frame); return; }
+    ctx.clearRect(0, 0, W, H);
+    for(var i = 0; i < bits.length; i++){
+      var b = bits[i];
+      b.sway += dt * 1.6;
+      b.y += b.vy * dt;
+      b.x += (b.vx + Math.sin(b.sway) * 14) * dt;
+      b.rot += b.vr * dt;
+      if(b.y > H + 20){ bits[i] = spawn(-20, b.side); continue; }
+
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = b.color;
+      if(b.ball){
+        ctx.beginPath(); ctx.arc(0, 0, b.w / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(4,18,27,.6)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(0, 0, b.w / 2, -0.6, 1.1); ctx.stroke();
+      } else {
+        ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h * Math.abs(Math.cos(b.sway)));
+      }
+      ctx.restore();
+    }
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', function(){ resize(); measureZones(); });
+  window.addEventListener('scroll', measureZones, {passive: true});
+  requestAnimationFrame(frame);
+}
+var rallyRaf = null, rallyA = null, rallyB = null, rallyArc = 120, rallyT0 = 0;
+function measureRally(){
+  var hero = document.querySelector('.hero');
+  if(!hero) return false;
+  var hr = hero.getBoundingClientRect();
+  var frames = hero.querySelectorAll('.frame');
+  if(frames.length >= 2){
+    var r0 = frames[0].getBoundingClientRect(), r1 = frames[1].getBoundingClientRect();
+    rallyA = {x: r0.left - hr.left + r0.width / 2, y: r0.top - hr.top + r0.height * 0.55};
+    rallyB = {x: r1.left - hr.left + r1.width / 2, y: r1.top - hr.top + r1.height * 0.55};
+  } else {
+    rallyA = {x: hr.width * 0.2, y: hr.height * 0.6};
+    rallyB = {x: hr.width * 0.8, y: hr.height * 0.6};
+  }
+  rallyArc = Math.max(70, Math.min(190, hr.height * 0.36));
+  return true;
+}
+function startRally(){
+  if(rallyRaf){ cancelAnimationFrame(rallyRaf); rallyRaf = null; }
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var b = document.getElementById('flyball');
-  var hero = document.querySelector('.hero');
-  if(!b || !hero) return;
-  var w = hero.clientWidth, h = hero.clientHeight;
-  var start = performance.now(), dur = 1400;
+  if(!b || !measureRally()) return;
   b.style.opacity = '1';
+  var dur = 1600;
+  if(!rallyT0) rallyT0 = performance.now();
   function step(now){
-    var t = Math.min(1, (now - start) / dur);
-    var x = 24 + (w - 60) * t;
-    var y = h * 0.62 - Math.sin(Math.PI * t) * (h * 0.42) + Math.abs(Math.sin(Math.PI * t * 3)) * 6;
-    b.style.transform = 'translate(' + x + 'px,' + y + 'px) rotate(' + (t * 720) + 'deg)';
-    if(t < 1) requestAnimationFrame(step);
-    else b.style.opacity = '0';
+    if(document.hidden){ rallyRaf = requestAnimationFrame(step); return; }
+    var elapsed = now - rallyT0;
+    if(elapsed >= dur * 2){ b.style.opacity = '0'; rallyRaf = null; return; }
+    var leg = Math.floor(elapsed / dur) % 2;
+    var t = (elapsed % dur) / dur;
+    var from = leg === 0 ? rallyA : rallyB;
+    var to = leg === 0 ? rallyB : rallyA;
+    var x = from.x + (to.x - from.x) * t;
+    var y = from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * rallyArc;
+    b.style.transform = 'translate(' + (x - 10) + 'px,' + (y - 10) + 'px) rotate(' + (elapsed / 4) + 'deg)';
+    rallyRaf = requestAnimationFrame(step);
   }
-  requestAnimationFrame(step);
+  rallyRaf = requestAnimationFrame(step);
 }
+window.addEventListener('resize', measureRally);
 
 render();
-setTimeout(bounceBall, 350);
+startRally();
+startConfetti();
 
 if(window.claude && typeof window.claude.use === 'function'){
   setStatus('Connecting…', true);
