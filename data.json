@@ -64,10 +64,55 @@
       "id": "t2",
       "emoji": "🥥",
       "name": "Kokos Cup",
-      "surface": "Vlora Hard · first to 2 wins",
-      "champion": null,
+      "surface": "Vlora Hard · first to 1 win",
+      "champion": 1,
       "prize": "",
-      "matches": []
+      "matches": [
+        {
+          "id": "k1",
+          "date": "",
+          "sets": [
+            [
+              3,
+              6
+            ],
+            [
+              6,
+              7
+            ]
+          ],
+          "note": "Mykyta takes it in straight sets"
+        }
+      ]
+    },
+    {
+      "id": "t3",
+      "emoji": "🍢",
+      "name": "Shashlyk Open",
+      "surface": "Vlora Hard · ceremonial draw",
+      "champion": "both",
+      "prize": "One skewer each, split down the middle",
+      "matches": [
+        {
+          "id": "s1",
+          "date": "",
+          "sets": [
+            [
+              6,
+              1
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              6
+            ]
+          ],
+          "note": "Called off at 6–6 — honourable draw, a point each"
+        }
+      ]
     }
   ],
   "friendlies": [
@@ -91,5 +136,5 @@
       "note": "Friendly, no trophy on the line"
     }
   ],
-  "updatedAt": 1
+  "updatedAt": 1790690230145
 }
